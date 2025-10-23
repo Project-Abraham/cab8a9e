@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 
-
-/* Data Structures */
-typedef struct {
-    unsigned int  num_entities;
-    unsigned int  num_brushes;
-    unsigned int  num_brush_entities;
-    /* TODO: pointers to brushes, entities & BrushEntities */
-} Valve220Map;
+#include "../../generic/brush.h"
+#include "../../generic/map.h"
 
 
-/* Functions */
-Valve220Map *parse_valve220_map(FILE *map_file);
+/* main parser function */
+MapFile   parse_valve220_map(FILE *map_file);
+/* TODO: metadata (.wad etc.) */
+
+/* line parsers */
+KeyValue  parse_valve220_map_keyvalue(char* line);
+BrushSide parse_valve220_map_brushside(char* line);
