@@ -13,14 +13,14 @@ typedef struct {
 Plane Plane_from_points(vec3 A, vec3 B, vec3 C);
 
 
-struct BrushSide {
+typedef struct {
     char*    material;
     Plane    plane;
     TexProj  projection;
-};
+} BrushSide;
 
 
-struct Brush {
-    int  num_sides;
-    struct BrushSide *sides;
-};
+typedef struct {
+    unsigned int  num_sides;
+    BrushSide    *sides;
+} Brush;
