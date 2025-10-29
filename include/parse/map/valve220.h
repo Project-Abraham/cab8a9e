@@ -1,14 +1,15 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "../../generic/brush.h"
-#include "../../generic/map.h"
+#include "generic/brush.h"
+#include "generic/map.h"
+#include "parse/tokens.h"
 
 
 /* main parser function */
-MapFile   parse_valve220_map(FILE *map_file);
-/* TODO: metadata (.wad etc.) */
+bool parse_valve220_map(FILE *map_file, MapFile *out);
 
 /* line parsers */
-KeyValue  parse_valve220_map_keyvalue(char* line);
-BrushSide parse_valve220_map_brushside(char* line);
+bool parse_valve220_map_keyvalue(char* line, TokenSet tokens, KeyValue *out);
+bool parse_valve220_map_brushside(char* line, TokenSet tokens, BrushSide *out);
