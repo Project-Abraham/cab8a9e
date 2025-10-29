@@ -149,6 +149,18 @@ bool tokens_as_float(char* string, TokenSet tokens, float* out) {
 };
 
 
+bool token_as_float(char* string, Token token, float *out) {
+    TokenSet tokens;
+    if (!tokenise_float(string, token, &tokens)) {
+        return false;
+    }
+    if (!tokens_as_float(string, tokens, out)) {
+        return false;  /* unlikely */
+    }
+    return true;
+}
+
+
 bool token_as_int(char* string, Token token, int *out) {
     int   i, sign;
 

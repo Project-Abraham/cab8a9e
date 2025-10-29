@@ -4,6 +4,10 @@
 
 #include "parse/token_value.h"
 
+/* hidden token_value functions */
+bool tokenise_float(char* string, Token token, TokenSet *out);
+bool tokens_as_float(char* string, TokenSet tokens, float *out);
+
 
 int main(int argc, char* argv[]) {
     char      line[2048];
