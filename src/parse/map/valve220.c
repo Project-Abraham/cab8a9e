@@ -12,15 +12,45 @@ bool parse_valve220_map(FILE *map_file, MapFile *out) {
     TokenSet   tokens;
     char       first_char;
     int        node_depth;
-    Entity     entity;
-    Brush      brush;
-    KeyValue   keyvalue;
-    BrushSide  brushside;
+    /* memory blocks */
+    Brush     *brushes;
+    BrushSide *sides;
+    KeyValue  *keyvals;
+    /* TODO: blocks for key, value & material strings */
+    int  num_brushes, num_sides, num_keyvals;
+    int  i;
 
-    out->entities = malloc(sizeof(Entity) * 16);
-    entity.brushes = malloc(sizeof(Brush) * 4);
-    entity.keyvalues = malloc(sizeof(KeyValue) * 4);
-    brush.sides = malloc(sizeof(BrushSide) * 6);
+    out->entities = malloc(sizeof(Entity)    * 16);
+    brushes       = malloc(sizeof(Brush)     *  8);
+    keyvals       = malloc(sizeof(KeyValue)  *  8);
+    sides         = malloc(sizeof(BrushSide) *  6);
+
+    out->num_entities = 0;
+    num_brushes       = 0;
+    num_keyvals       = 0;
+    num_sides         = 0;
+
+    out->entities[0].num_brushes = 0;
+    out->entities[0].num_keyvalues = 0;
+    out->entities[0].brushes = &brushes[0];
+    out->entities[0].brushes[0].num_sides = 0;
+    out->entities[0].brushes[0].sides = &sides[0];
+    out->entities[0].keyvalues = &keyvals[0];
+
+    #define FREE_ALL() \
+        if (tokens.tokens != NULL) { \
+            free(tokens.tokens); \
+            tokens.tokens = NULL; \
+        } \
+        for (i = 0; i < num_sides; i++) { \
+            free(side[i].material); \
+        } \
+        for (i = 0; i < num_keyvals; i++) { \
+            free(keyvals[i].key); \
+            free(keyvals[i].value); \
+        } \
+        free_MapFile(out)
+        
 
     node_depth = 0;
     do {
@@ -37,41 +67,48 @@ bool parse_valve220_map(FILE *map_file, MapFile *out) {
         } else if (first_char == '{') {  /* a single token (1 char) */
             node_depth++;
             if (node_depth >= 2) {
-                /* TODO: free everything */
+                FREE_ALL();
                 return false;  /* too deep */
             }
         } else if (first_char == '}') {  /* a single token (1 char) */
             node_depth--;
             if (node_depth == 1) {
-                out->entities[out->num_entities] = entity;
-                out->num_entities++;
-                /* TODO: realloc entity.keyvalues (fit) */
-                /* TODO: realloc out->entities (overflow) */
                 /* new entity */
-                entity.num_brushes = 0;
-                entity.num_keyvalues = 0;
-                entity.brushes = malloc(sizeof(Brush) * 4);
-                entity.keyvalues = malloc(sizeof(KeyValue) * 4);
+                out->num_entities++;
+                if (out->num_entities % 16 == 0) {
+                    out->entities = realloc(out->entities,
+                        sizeof(Entity) * (out->num_entities + 16));
+                }
+                out->entities[out->num_entities].num_brushes = 0;
+                out->entities[out->num_entities].num_keyvalues = 0;
+                out->entities[out->num_entities].brushes = &brushes[num_brushes];
+                out->entities[out->num_entities].keyvalues = &keyvals[num_keyvals];
             } else if (node_depth == 2) {
-                entity.brushes[entity.num_brushes] = brush;
-                entity.num_brushes++;
-                /* TODO: realloc brush.sides (fit) */
-                /* TODO: realloc brushes (overflow) */
                 /* new brush */
-                brush.num_sides = 0;
-                brush.sides = malloc(sizeof(BrushSide) * 6);
+                num_brushes++;
+                if (num_brushes % 8 == 0) {
+                    brushes = realloc(brushes,
+                        sizeof(Entity) * (num_brushes + 8));
+                }
+                brushes[num_brushes].num_sides = 0;
+                brushes[num_brushes].sides = &sides[num_sides];
             }
-        } else if (parse_valve220_map_keyvalue(line, tokens, &keyvalue)) {
-            entity.keyvalues[entity.num_keyvalues] = keyvalue;
-            entity.num_keyvalues++;
-            /* TODO: realloc entity.keyvalues (overflow) */
-        } else if (parse_valve220_map_brushside(line, tokens, &brushside)) {
-            brush.sides[brush.num_sides] = brushside;
-            brush.num_sides++;
-            /* TODO: realloc brush.sides (overflow) */
+        } else if (parse_valve220_map_keyvalue(line, tokens, &keyvals[num_keyvals])) {
+            num_keyvals++;
+            if (num_keyvals % 8 == 0) {
+                keyvals = realloc(keyvals,
+                    sizeof(KeyValue) * (num_keyvals + 8));
+            }
+        } else if (parse_valve220_map_brushside(line, tokens, &sides[num_sides])) {
+            num_sides++;
+            if (num_sides % 6 == 0) {
+                sides = realloc(sides,
+                    sizeof(BrushSide) * (num_sides + 6));
+            }
         } else {
-            /* TODO: free everything */
-            return false;  /* unexpected line */
+            /* unexpected line */
+            FREE_ALL();
+            return false;
         }
         /* cleanup */
         if (tokens.tokens != NULL) {
@@ -80,8 +117,12 @@ bool parse_valve220_map(FILE *map_file, MapFile *out) {
     } while (line[0] != '\0');
 
     if (node_depth != 0) {
-        return false;  /* unclosed node(s) */
+        /* unclosed node(s) */
+        FREE_ALL();
+        return false;
     }
+
+    #undef FREE_ALL
 
     return true;
 };

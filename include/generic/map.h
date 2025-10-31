@@ -23,3 +23,6 @@ typedef struct {
     unsigned int  num_entities;
     Entity       *entities;
 } MapFile;
+
+
+void free_MapFile(MapFile *map);
