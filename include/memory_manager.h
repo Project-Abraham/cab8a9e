@@ -26,6 +26,12 @@ typedef struct DataPool_s {
     int   used;   /* sum(link.size) */
 } DataPool;
 
+/* NOTE:
+we should probably merge Link & Data pools
+they will always exist in pairs anyway
+function signatures would be a lot simpler if we did this
+*/
+
 
 /* memcopies with bounds checks */
 /* NOTE: init_link is just `memset(&link, 0, sizeof(Link));` */
@@ -69,8 +75,40 @@ void pop(Link *link) {  // (refs == 0) => KILL
 // we can just append to the tail of a different chain
 // feel like I'm re-inventing C++ std::vector here
 */
-/* losing my mind prototyping memory models instead of profiling */
-/* need to create multiple implementations & test them */
+
+/* NOTE:
+we can split out checking for matches for searching
+this means string pointers double as hashes
+*/
+int add_string(LinkPool *lpool, DataPool *dpool, int length, char* string, Link *out);
+/*
+Link* match = map->strings
+
+if (match == NULL) {  // empty list
+   map->strings = <NEW LINK>
+   map->strings->length = length
+   map->strings->data = <ALLOC MEMCPY DATA (string)>
+   out = map->
+   return PASS
+}
+
+while (match->next != NULL) {  // strcmp loop
+  if length matches
+    if string matches
+      out = match
+      return PASS
+  match = match->next
+}
+
+// try to alloc new data
+if free_tail < length
+  return FAIL
+
+link = .append link
+  last_string_link->next
+memcpy string -> link->data
+return PASS
+*/
 
 /* worries:
  - memory fragmentation (allocation gets harder)
